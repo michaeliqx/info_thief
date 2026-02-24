@@ -16,6 +16,7 @@ from app.models import BriefItem, DailyBrief, RankedItem, Settings, SourceConfig
 from app.normalizer import normalize_items
 from app.publisher import archive_brief, push_markdown, render_markdown, send_failure_alert
 from app.ranker import rank_items, select_items_with_mix
+from app.rsshub_bootstrap import ensure_rsshub_for_sources
 from app.storage import StateStore
 
 logger = logging.getLogger(__name__)
@@ -139,6 +140,7 @@ def run_daily_pipeline(
 ) -> DailyBrief:
     settings = load_settings(settings_path)
     sources = load_sources(sources_path)
+    ensure_rsshub_for_sources(sources)
     llm = _build_llm_client(settings, llm_client)
 
     store = StateStore(settings.db_path)

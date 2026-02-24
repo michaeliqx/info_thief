@@ -4,78 +4,89 @@ sources:
     url: https://www.aitntnews.com/
     article_selector: "a[href*='newDetail']"
     link_pattern: "newDetail\\.html\\?newId="
+    date_selector: "div[style*='text-align: right']"
+    date_regex: "\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}"
     weight: 1.5
     enabled: true
     tags: ["ai", "china", "wechat", "media", "industry"]
 
   - name: 数字生命卡兹克(知乎专栏主源)
     type: rss
-    url: https://news.google.com/rss/search?q=%22%E6%95%B0%E5%AD%97%E7%94%9F%E5%91%BD%E5%8D%A1%E5%85%B9%E5%85%8B%22+site%3Azhihu.com+when%3A30d&hl=zh-CN&gl=CN&ceid=CN:zh-Hans
+    url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/%E6%95%B0%E5%AD%97%E7%94%9F%E5%91%BD%E5%8D%A1%E5%85%B9%E5%85%8B%20%E7%9F%A5%E4%B9%8E
     weight: 2.3
-    enabled: true
+    enabled: true  # 依赖本地 RSSHub（scripts/rsshub/start_rsshub.sh）
     tags: ["ai", "china", "zhihu", "repost", "self_media", "personal", "creator", "priority_top"]
 
   - name: 数字生命卡兹克(腾讯新闻镜像)
     type: rss
-    url: https://news.google.com/rss/search?q=%22%E6%95%B0%E5%AD%97%E7%94%9F%E5%91%BD%E5%8D%A1%E5%85%B9%E5%85%8B%22+site%3Aqq.com+when%3A30d&hl=zh-CN&gl=CN&ceid=CN:zh-Hans
+    url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/%E6%95%B0%E5%AD%97%E7%94%9F%E5%91%BD%E5%8D%A1%E5%85%B9%E5%85%8B%20%E8%85%BE%E8%AE%AF
     weight: 2.2
-    enabled: true
+    enabled: true  # 依赖本地 RSSHub
     tags: ["ai", "china", "qq_news", "repost", "self_media", "personal", "creator", "priority_top"]
 
   - name: 数字生命卡兹克(虎嗅转载)
     type: rss
-    url: https://news.google.com/rss/search?q=%22%E6%95%B0%E5%AD%97%E7%94%9F%E5%91%BD%E5%8D%A1%E5%85%B9%E5%85%8B%22+site%3Ahuxiu.com+when%3A30d&hl=zh-CN&gl=CN&ceid=CN:zh-Hans
+    url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/%E6%95%B0%E5%AD%97%E7%94%9F%E5%91%BD%E5%8D%A1%E5%85%B9%E5%85%8B
     weight: 2.05
-    enabled: true
+    enabled: true  # 依赖本地 RSSHub
     tags: ["ai", "china", "huxiu", "repost", "self_media", "personal", "creator", "priority_top"]
 
   - name: 数字生命卡兹克(51CTO转载)
     type: rss
-    url: https://news.google.com/rss/search?q=%22%E6%95%B0%E5%AD%97%E7%94%9F%E5%91%BD%E5%8D%A1%E5%85%B9%E5%85%8B%22+site%3A51cto.com+when%3A30d&hl=zh-CN&gl=CN&ceid=CN:zh-Hans
+    url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/%E6%95%B0%E5%AD%97%E7%94%9F%E5%91%BD%E5%8D%A1%E5%85%B9%E5%85%8B%2051CTO
     weight: 1.95
-    enabled: true
+    enabled: true  # 依赖本地 RSSHub
     tags: ["ai", "china", "51cto", "repost", "self_media", "personal", "creator", "priority_top"]
+
+  - name: 53AI(刘小排r)
+    type: html
+    url: https://www.53ai.com/
+    article_selector: "a[href*='/product/']"
+    link_pattern: "53ai\\.com/product/"
+    weight: 1.2
+    enabled: false  # 53ai 主要为产品页，无文章列表
+    tags: ["ai", "china", "wechat", "repost", "self_media", "personal", "creator", "technology"]
 
   - name: MindCode(公众号公开转载)
     type: rss
-    url: https://news.google.com/rss/search?q=%22MindCode%22+AI&hl=zh-CN&gl=CN&ceid=CN:zh-Hans
+    url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/MindCode%20%E5%85%AC%E4%BC%97%E5%8F%B7
     weight: 1.05
-    enabled: true
+    enabled: true  # 依赖本地 RSSHub
     tags: ["ai", "china", "wechat", "repost", "self_media", "creator", "product"]
 
   - name: AGENT橘(公众号公开转载)
     type: rss
-    url: https://news.google.com/rss/search?q=AGENT%E6%A9%98%20OR%20OpenClaw%20%E6%8A%80%E6%9C%AF%E9%97%AD%E9%97%A8&hl=zh-CN&gl=CN&ceid=CN:zh-Hans
+    url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/AGENT%E6%A9%98%20OpenClaw
     weight: 1.2
-    enabled: true
+    enabled: true  # 依赖本地 RSSHub
     tags: ["ai", "china", "wechat", "repost", "self_media", "personal", "creator", "technology"]
 
   - name: Founder Park(公众号公开转载)
     type: rss
-    url: https://news.google.com/rss/search?q=%22Founder%20Park%22%20site%3Ageekpark.net%20AI&hl=zh-CN&gl=CN&ceid=CN:zh-Hans
+    url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/Founder%20Park
     weight: 1.2
-    enabled: true
+    enabled: true  # 依赖本地 RSSHub
     tags: ["ai", "china", "wechat", "repost", "self_media", "creator", "industry"]
 
   - name: 刘小排r(公众号公开转载)
     type: rss
-    url: https://news.google.com/rss/search?q=%22%E5%88%98%E5%B0%8F%E6%8E%92r%22%20site%3A53ai.com%20AI&hl=zh-CN&gl=CN&ceid=CN:zh-Hans
+    url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/%E5%88%98%E5%B0%8F%E6%8E%92r%2053AI
     weight: 1.25
-    enabled: true
+    enabled: true  # 依赖本地 RSSHub
     tags: ["ai", "china", "wechat", "repost", "self_media", "personal", "creator", "technology"]
 
   - name: 42章经(公众号公开转载)
     type: rss
-    url: https://news.google.com/rss/search?q=%2242%E7%AB%A0%E7%BB%8F%22%20AI%20Newsletter&hl=zh-CN&gl=CN&ceid=CN:zh-Hans
+    url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/42%E7%AB%A0%E7%BB%8F%20AI
     weight: 1.15
-    enabled: true
+    enabled: true  # 依赖本地 RSSHub
     tags: ["ai", "china", "wechat", "repost", "self_media", "personal", "industry"]
 
   - name: 歸藏(公众号公开转载)
     type: rss
-    url: https://news.google.com/rss/search?q=%22%E6%AD%B8%E8%97%8F%22%20AI&hl=zh-CN&gl=CN&ceid=CN:zh-Hans
+    url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/%E6%AD%B8%E8%97%8F%20AI
     weight: 1.1
-    enabled: true
+    enabled: true  # 依赖本地 RSSHub
     tags: ["ai", "china", "wechat", "repost", "self_media", "personal", "creator", "technology"]
 
   - name: 机器之心(公众号公开页)
@@ -100,6 +111,8 @@ sources:
     url: https://36kr.com/information/AI
     article_selector: "a[href*='/p/']"
     link_pattern: "/p/[0-9]+"
+    item_container_selector: "div.information-flow-item"
+    date_selector: "span.kr-flow-bar-time"
     weight: 1.2
     enabled: true
     tags: ["ai", "china", "portal", "industry"]
@@ -152,6 +165,8 @@ sources:
     url: https://www.anthropic.com/news
     article_selector: "a[href*='/news/']"
     link_pattern: "anthropic\\.com/news/"
+    date_selector: "time"
+    date_attr: "datetime"
     weight: 1.3
     enabled: true
     tags: ["ai", "global", "official", "technology"]
@@ -162,5 +177,5 @@ sources:
     article_selector: "a[href*='/blog/']"
     link_pattern: "deepmind\\.google/blog/"
     weight: 1.3
-    enabled: true
+    enabled: false  # deepmind.google 在中国大陆不可访问，易出现 SSL 错误
     tags: ["ai", "global", "official", "research"]

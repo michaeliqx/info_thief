@@ -77,7 +77,7 @@ def test_pipeline_generates_brief_and_archives(tmp_path, monkeypatch) -> None:
     assert Path(db_path).exists()
 
 
-def test_pipeline_now_none_keeps_recent_discovered_items(tmp_path, monkeypatch) -> None:
+def test_pipeline_now_none_keeps_recent_published_items(tmp_path, monkeypatch) -> None:
     settings_path = tmp_path / "settings.yaml"
     sources_path = tmp_path / "sources.yaml"
     db_path = tmp_path / "state.db"
@@ -115,7 +115,7 @@ def test_pipeline_now_none_keeps_recent_discovered_items(tmp_path, monkeypatch) 
             url="https://example.com/recent",
             title="公司发布 AI 应用",
             content="这是刚刚发现的 AI 资讯",
-            published_at=None,
+            published_at=now - timedelta(hours=1),
             discovered_at=now,
             tags=["ai", "product"],
         )
@@ -178,7 +178,7 @@ def test_pipeline_pushes_to_feishu_targets(tmp_path, monkeypatch) -> None:
             url="https://example.com/recent",
             title="公司发布 AI 应用",
             content="这是刚刚发现的 AI 资讯",
-            published_at=None,
+            published_at=now - timedelta(hours=1),
             discovered_at=now,
             tags=["ai", "product"],
         )

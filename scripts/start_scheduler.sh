@@ -10,5 +10,6 @@ if [ -f .env ]; then
   source .env
   set +a
 fi
-exec python -m app.scheduler
 
+"$PROJECT_DIR/scripts/rsshub/ensure_rsshub.sh"
+exec python -m app.scheduler

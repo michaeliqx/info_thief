@@ -4,14 +4,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from unittest.mock import patch
 
-import pytest
-
 from app.collector import (
     _extract_date_from_element,
     _parse_html_date,
     collect_from_source,
 )
-from app.models import RawItem, SourceConfig
+from app.models import SourceConfig
 
 
 def test_parse_html_date_absolute() -> None:
@@ -59,6 +57,29 @@ def test_parse_html_date_iso() -> None:
     assert result.year == 2026
     assert result.month == 2
     assert result.day == 24
+
+
+def test_parse_html_date_chinese_month_day_time() -> None:
+    """解析中文月日时间格式。"""
+    ref = datetime(2026, 2, 24, 10, 0, 0, tzinfo=timezone.utc)
+    result = _parse_html_date("发布时间：02月13日 13:27", ref_time=ref)
+    assert result is not None
+    assert result.year == 2026
+    assert result.month == 2
+    assert result.day == 13
+    assert result.hour == 13
+    assert result.minute == 27
+
+
+def test_parse_html_date_chinese_ymd_hour_only() -> None:
+    """解析中文年月日+小时（无分钟）格式。"""
+    result = _parse_html_date("2026年02月05日 19点")
+    assert result is not None
+    assert result.year == 2026
+    assert result.month == 2
+    assert result.day == 5
+    assert result.hour == 19
+    assert result.minute == 0
 
 
 def test_parse_html_date_empty() -> None:
@@ -114,8 +135,8 @@ def test_collect_html_with_date_from_mock() -> None:
     assert items[1].published_at.hour == 18
 
 
-def test_collect_html_without_date_config() -> None:
-    """无日期配置时 published_at 为 None。"""
+def test_collect_html_without_date_config_drop_when_article_has_no_date() -> None:
+    """无日期配置且文章页也无日期时，条目会被丢弃。"""
     html = """
     <html><body>
     <a href="https://example.com/p/123.html">智东西AI新闻测试</a>
@@ -136,5 +157,45 @@ def test_collect_html_without_date_config() -> None:
 
         items = collect_from_source(source, timeout_seconds=5)
 
+    assert len(items) == 0
+
+
+def test_collect_html_fallback_article_page_date() -> None:
+    """列表页无日期时，回源文章页提取发布时间。"""
+    list_html = """
+    <html><body>
+    <a href="https://example.com/p/123.html">智东西AI新闻测试</a>
+    </body></html>
+    """
+    article_html = """
+    <html><head>
+      <meta property="article:published_time" content="2026-02-24T09:30:00+08:00" />
+    </head><body>正文</body></html>
+    """
+    source = SourceConfig(
+        name="test_fallback_article_date",
+        type="html",
+        url="https://example.com/",
+        article_selector="a[href*='/p/']",
+        link_pattern=r"example\.com/p/",
+    )
+
+    with patch("app.collector.httpx.Client") as mock_client:
+        client = mock_client.return_value.__enter__.return_value
+
+        class _Resp:
+            def __init__(self, text: str) -> None:
+                self.text = text
+
+            @staticmethod
+            def raise_for_status() -> None:
+                return None
+
+        client.get.side_effect = [_Resp(list_html), _Resp(article_html)]
+        items = collect_from_source(source, timeout_seconds=5)
+
     assert len(items) == 1
-    assert items[0].published_at is None
+    assert items[0].published_at is not None
+    assert items[0].published_at.year == 2026
+    assert items[0].published_at.month == 2
+    assert items[0].published_at.day == 24

@@ -53,3 +53,23 @@ def test_normalize_items_accepts_ai_tag_fallback() -> None:
     normalized = normalize_items(raw_items, since=since, until=now)
     assert len(normalized) == 1
     assert normalized[0].item_id
+
+
+def test_normalize_items_drop_missing_published_at() -> None:
+    now = datetime.now(timezone.utc)
+    since = now - timedelta(hours=24)
+    raw_items = [
+        RawItem(
+            source_name="s1",
+            source_weight=1.0,
+            url="https://a.com/post4",
+            title="AI 应用动态",
+            content="内容",
+            published_at=None,
+            discovered_at=now,
+            tags=["ai"],
+        )
+    ]
+
+    normalized = normalize_items(raw_items, since=since, until=now)
+    assert normalized == []

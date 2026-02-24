@@ -33,10 +33,42 @@ export FEISHU_VERIFICATION_TOKEN="你在飞书事件订阅里设置的token"
 export FEISHU_ENCRYPT_KEY="" # 可选，若飞书事件配置了加密Key则必须填写
 ```
 
-如需启用 news.google.com 等需代理的源（数字生命卡兹克、MindCode 等），在 `.env` 或环境中配置：
+本项目默认将“数字生命卡兹克 / MindCode / AGENT橘 / Founder Park / 刘小排r / 42章经 / 歸藏”等源改为本地 RSSHub 路由（不依赖 `news.google.com`）。
+
+先执行一键安装（无需 Docker）：
 
 ```bash
-export HTTP_PROXY="http://127.0.0.1:7890"   # 或你的代理地址
+./scripts/rsshub/setup_rsshub.sh
+```
+
+启动 RSSHub（默认监听 `0.0.0.0:1200`）：
+
+```bash
+./scripts/rsshub/start_rsshub.sh
+```
+
+单独做 RSSHub 路由冒烟测试：
+
+```bash
+./scripts/rsshub/test_rsshub.sh
+```
+
+如需自定义监听地址和端口：
+
+```bash
+RSSHUB_HOST=0.0.0.0 RSSHUB_PORT=1201 ./scripts/rsshub/start_rsshub.sh
+```
+
+`config/sources.yaml` 已改为通过 `RSSHUB_BASE_URL` 注入，不需要再手改 YAML：
+
+```bash
+export RSSHUB_BASE_URL="http://0.0.0.0:1200"
+```
+
+容器内抓取通常建议：
+
+```bash
+export RSSHUB_BASE_URL="http://127.0.0.1:1200"
 ```
 
 ## 3. 大模型接入测试
@@ -48,13 +80,15 @@ python -m app.test_llm
 ## 4. 单次运行（采集+整理+本地归档）
 
 ```bash
-python -m app.run_daily
+./scripts/start_daily.sh
 ```
+
+该脚本会先自动检查并拉起本地 RSSHub，再执行 `python -m app.run_daily`。
 
 ## 5. 启动后端服务
 
 ```bash
-python -m app.server --host 127.0.0.1 --port 8000
+./scripts/start_server.sh
 ```
 
 可用接口：
@@ -66,7 +100,7 @@ python -m app.server --host 127.0.0.1 --port 8000
 ## 6. 常驻调度
 
 ```bash
-python -m app.scheduler
+./scripts/start_scheduler.sh
 ```
 
 ## 7. 测试

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Supervisor 启动脚本：加载 .env 后启动 HTTP 服务（适用于不支持 env_file 的 Supervisor 版本）
+# Supervisor/cron 启动脚本：加载 .env，确保 RSSHub 可用后执行单次日报任务
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -12,4 +12,4 @@ if [ -f .env ]; then
 fi
 
 "$PROJECT_DIR/scripts/rsshub/ensure_rsshub.sh"
-exec python -m app.server --host 0.0.0.0 --port 8000
+exec python -m app.run_daily

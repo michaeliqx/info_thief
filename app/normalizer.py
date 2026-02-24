@@ -102,8 +102,9 @@ def normalize_items(raw_items: list[RawItem], since: datetime, until: datetime) 
         if not is_ai_related(title, content, item.tags):
             continue
 
-        published = item.published_at or item.discovered_at
-        if not is_within_window(published, since, until):
+        if item.published_at is None:
+            continue
+        if not is_within_window(item.published_at, since, until):
             continue
 
         canonical_url = canonicalize_url(item.url)

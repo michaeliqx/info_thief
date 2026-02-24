@@ -9,16 +9,24 @@ import yaml
 
 from app.models import Settings, SourceConfig
 
-_ENV_PATTERN = re.compile(r"^\$\{([A-Z0-9_]+)\}$")
+_ENV_PATTERN = re.compile(r"\$\{([A-Z0-9_]+)(?::-([^}]*))?\}")
+
+
+def _resolve_env_string(value: str) -> str:
+    def _replace(match: re.Match[str]) -> str:
+        env_name = match.group(1)
+        default = match.group(2)
+        env_value = os.getenv(env_name)
+        if env_value:
+            return env_value
+        return default or ""
+
+    return _ENV_PATTERN.sub(_replace, value)
 
 
 def _resolve_env_value(value: Any) -> Any:
     if isinstance(value, str):
-        match = _ENV_PATTERN.match(value.strip())
-        if match:
-            env_name = match.group(1)
-            return os.getenv(env_name, "")
-        return value
+        return _resolve_env_string(value)
     if isinstance(value, dict):
         return {k: _resolve_env_value(v) for k, v in value.items()}
     if isinstance(value, list):
