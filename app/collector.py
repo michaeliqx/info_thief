@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime, timezone
-from typing import Iterable
+from datetime import datetime, timedelta, timezone
+from typing import Iterable, Optional
 from urllib.parse import urljoin
 
 import feedparser
@@ -14,6 +14,15 @@ from dateutil import parser as dtparser
 from app.models import RawItem, SourceConfig
 
 logger = logging.getLogger(__name__)
+
+# 相对时间匹配：N小时前、N分钟前、昨天、N天前、今天
+_RELATIVE_PATTERNS = [
+    (re.compile(r"(\d+)\s*小时前"), lambda m: timedelta(hours=int(m.group(1)))),
+    (re.compile(r"(\d+)\s*分钟前"), lambda m: timedelta(minutes=int(m.group(1)))),
+    (re.compile(r"(\d+)\s*天前"), lambda m: timedelta(days=int(m.group(1)))),
+    (re.compile(r"昨天"), lambda _: timedelta(days=1)),
+    (re.compile(r"今天"), lambda _: timedelta(hours=0)),
+]
 
 _NOISE_TITLE_WORDS = {
     "登录",
@@ -43,6 +52,46 @@ def _parse_datetime(value: str | None) -> datetime | None:
         return parsed.astimezone(timezone.utc)
     except (ValueError, TypeError):
         return None
+
+
+def _parse_html_date(
+    text: str,
+    regex: Optional[str] = None,
+    ref_time: Optional[datetime] = None,
+) -> Optional[datetime]:
+    """解析 HTML 中的日期文本，支持绝对日期和相对时间。"""
+    if not text or not text.strip():
+        return None
+    text = text.strip()
+    ref = ref_time or datetime.now(timezone.utc)
+
+    # 相对时间
+    for pattern, delta_fn in _RELATIVE_PATTERNS:
+        m = pattern.search(text)
+        if m:
+            delta = delta_fn(m)
+            return (ref - delta).astimezone(timezone.utc)
+
+    # 用正则提取日期片段
+    if regex:
+        m = re.search(regex, text)
+        if m:
+            text = m.group(0)
+
+    return _parse_datetime(text)
+
+
+def _extract_date_from_element(
+    elem,
+    date_attr: Optional[str],
+    date_regex: Optional[str],
+    ref_time: datetime,
+) -> Optional[datetime]:
+    """从 DOM 元素提取发布时间。"""
+    if date_attr and elem.get(date_attr):
+        return _parse_datetime(elem.get(date_attr))
+    text = elem.get_text(" ", strip=True)
+    return _parse_html_date(text, regex=date_regex, ref_time=ref_time)
 
 
 def _collect_rss(source: SourceConfig, client: httpx.Client) -> list[RawItem]:
@@ -85,30 +134,68 @@ def _collect_rss(source: SourceConfig, client: httpx.Client) -> list[RawItem]:
     return items
 
 
-def _extract_page_links(source: SourceConfig, html: str) -> Iterable[tuple[str, str]]:
+def _extract_page_links(
+    source: SourceConfig, html: str, ref_time: datetime
+) -> Iterable[tuple[str, str, Optional[datetime]]]:
     soup = BeautifulSoup(html, "html.parser")
     selector = source.article_selector or "article a, h2 a, h3 a, li a"
     compiled_pattern = re.compile(source.link_pattern) if source.link_pattern else None
-    for a in soup.select(selector):
+
+    def _check_and_yield(a, container) -> Optional[tuple[str, str, Optional[datetime]]]:
         href = a.get("href")
         text = a.get_text(" ", strip=True)
         if not href or not text:
-            continue
+            return None
         lowered_text = text.strip().lower()
         if len(text.strip()) < 8:
-            continue
+            return None
         if any(noise in lowered_text for noise in _NOISE_TITLE_WORDS):
-            continue
+            return None
         if lowered_text.endswith("app"):
-            continue
+            return None
         if href.startswith(("#", "javascript:", "mailto:")):
-            continue
+            return None
         url = urljoin(source.url, href)
         if not url.startswith("http"):
-            continue
+            return None
         if compiled_pattern and not compiled_pattern.search(url):
-            continue
-        yield text, url
+            return None
+        published = None
+        if source.date_selector and container:
+            date_elem = container.select_one(source.date_selector)
+            if date_elem:
+                published = _extract_date_from_element(
+                    date_elem, source.date_attr, source.date_regex, ref_time
+                )
+        return (text, url, published)
+
+    if source.item_container_selector and source.date_selector:
+        for container in soup.select(source.item_container_selector):
+            a = container.select_one(selector)
+            if not a:
+                continue
+            result = _check_and_yield(a, container)
+            if result:
+                yield result
+        return
+
+    if source.date_selector:
+        for a in soup.select(selector):
+            container = a.parent
+            while container and container.name:
+                date_elem = container.select_one(source.date_selector)
+                if date_elem:
+                    break
+                container = container.parent if hasattr(container, "parent") else None
+            result = _check_and_yield(a, container)
+            if result:
+                yield result
+        return
+
+    for a in soup.select(selector):
+        result = _check_and_yield(a, None)
+        if result:
+            yield result
 
 
 def _collect_html(source: SourceConfig, client: httpx.Client) -> list[RawItem]:
@@ -118,7 +205,7 @@ def _collect_html(source: SourceConfig, client: httpx.Client) -> list[RawItem]:
 
     items: list[RawItem] = []
     seen_urls: set[str] = set()
-    for title, url in _extract_page_links(source, resp.text):
+    for title, url, published in _extract_page_links(source, resp.text, now):
         if url in seen_urls:
             continue
         seen_urls.add(url)
@@ -129,7 +216,7 @@ def _collect_html(source: SourceConfig, client: httpx.Client) -> list[RawItem]:
                 url=url,
                 title=title,
                 content="",
-                published_at=None,
+                published_at=published,
                 discovered_at=now,
                 tags=source.tags,
             )
@@ -139,9 +226,16 @@ def _collect_html(source: SourceConfig, client: httpx.Client) -> list[RawItem]:
     return items
 
 
-def collect_from_source(source: SourceConfig, timeout_seconds: int = 15) -> list[RawItem]:
+def collect_from_source(
+    source: SourceConfig,
+    timeout_seconds: int = 15,
+    proxy: str | None = None,
+) -> list[RawItem]:
     logger.info("Collecting source: %s", source.name)
-    with httpx.Client(timeout=timeout_seconds, follow_redirects=True) as client:
+    client_kwargs: dict = {"timeout": timeout_seconds, "follow_redirects": True}
+    if proxy and proxy.strip():
+        client_kwargs["proxy"] = proxy.strip()
+    with httpx.Client(**client_kwargs) as client:
         if source.type == "rss":
             return _collect_rss(source, client)
         if source.type == "html":

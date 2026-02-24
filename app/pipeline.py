@@ -36,7 +36,11 @@ def _build_llm_client(settings: Settings, override: Optional[LLMClient] = None) 
     return FallbackLLMClient()
 
 
-def collect_all_sources(sources: list[SourceConfig], timeout_seconds: int) -> tuple[list, dict[str, str]]:
+def collect_all_sources(
+    sources: list[SourceConfig],
+    timeout_seconds: int,
+    proxy: str | None = None,
+) -> tuple[list, dict[str, str]]:
     raw_items = []
     source_errors: dict[str, str] = {}
 
@@ -46,7 +50,8 @@ def collect_all_sources(sources: list[SourceConfig], timeout_seconds: int) -> tu
     max_workers = min(8, max(1, len(sources)))
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_map = {
-            executor.submit(collect_from_source, source, timeout_seconds): source.name for source in sources
+            executor.submit(collect_from_source, source, timeout_seconds, proxy): source.name
+            for source in sources
         }
         for future in as_completed(future_map):
             source_name = future_map[future]
@@ -151,7 +156,10 @@ def run_daily_pipeline(
     metrics["push_enabled"] = push_enabled
 
     try:
-        raw_items, source_errors = collect_all_sources(sources, settings.request_timeout_seconds)
+        proxy = settings.http_proxy.strip() or None
+        raw_items, source_errors = collect_all_sources(
+            sources, settings.request_timeout_seconds, proxy=proxy
+        )
         metrics["source_errors"] = source_errors
         metrics["raw_count"] = len(raw_items)
 

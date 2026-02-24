@@ -75,11 +75,16 @@ class SourceConfig(BaseModel):
     weight: float = 1.0
     enabled: bool = True
     tags: list[str] = Field(default_factory=list)
+    # HTML 源发布时间解析（仅 type=html 时生效）
+    item_container_selector: Optional[str] = None  # 文章项容器，如 "div.news-item"
+    date_selector: Optional[str] = None  # 日期元素选择器，如 "time" 或 "div[style*='text-align: right']"
+    date_attr: Optional[str] = None  # 日期属性名，如 "datetime"；为空则从元素文本解析
+    date_regex: Optional[str] = None  # 从文本提取日期的正则，如 r"\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}"
 
 
 class Settings(BaseModel):
     timezone: str
-    schedule_time: str
+    schedule_time: str = "09:30"
     collector_trigger_time: str = "09:20"
     item_min: int = 8
     item_max: int = 12
@@ -105,6 +110,7 @@ class Settings(BaseModel):
     feishu_require_mention: bool = True
     openai_api_key: str = ""
     request_timeout_seconds: int = 15
+    http_proxy: str = ""  # 可选，用于访问 news.google.com 等需代理的源，如 http://127.0.0.1:7890
     db_path: str = "data/state.db"
     archives_dir: str = "archives"
     log_level: str = "INFO"

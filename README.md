@@ -33,6 +33,12 @@ export FEISHU_VERIFICATION_TOKEN="你在飞书事件订阅里设置的token"
 export FEISHU_ENCRYPT_KEY="" # 可选，若飞书事件配置了加密Key则必须填写
 ```
 
+如需启用 news.google.com 等需代理的源（数字生命卡兹克、MindCode 等），在 `.env` 或环境中配置：
+
+```bash
+export HTTP_PROXY="http://127.0.0.1:7890"   # 或你的代理地址
+```
+
 ## 3. 大模型接入测试
 
 ```bash

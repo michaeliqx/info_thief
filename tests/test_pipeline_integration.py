@@ -58,7 +58,7 @@ def test_pipeline_generates_brief_and_archives(tmp_path, monkeypatch) -> None:
             )
         )
 
-    def _fake_collect_all_sources(_sources, _timeout):
+    def _fake_collect_all_sources(_sources, _timeout, proxy=None):
         return raw_items, {}
 
     monkeypatch.setattr("app.pipeline.collect_all_sources", _fake_collect_all_sources)
@@ -107,7 +107,7 @@ def test_pipeline_now_none_keeps_recent_discovered_items(tmp_path, monkeypatch) 
     settings_path.write_text(yaml.safe_dump(settings, allow_unicode=True), encoding="utf-8")
     sources_path.write_text(yaml.safe_dump(sources, allow_unicode=True), encoding="utf-8")
 
-    def _fake_collect_all_sources(_sources, _timeout):
+    def _fake_collect_all_sources(_sources, _timeout, proxy=None):
         now = datetime.now(timezone.utc)
         item = RawItem(
             source_name="dummy",
@@ -171,7 +171,7 @@ def test_pipeline_pushes_to_feishu_targets(tmp_path, monkeypatch) -> None:
 
     now = datetime.now(timezone.utc)
 
-    def _fake_collect_all_sources(_sources, _timeout):
+    def _fake_collect_all_sources(_sources, _timeout, proxy=None):
         item = RawItem(
             source_name="dummy",
             source_weight=1.2,
