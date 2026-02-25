@@ -34,7 +34,7 @@ def test_normalize_items_filters_time_window() -> None:
     assert normalized[0].canonical_url == "https://a.com/post1"
 
 
-def test_normalize_items_accepts_ai_tag_fallback() -> None:
+def test_normalize_items_rejects_ai_tag_only() -> None:
     now = datetime.now(timezone.utc)
     since = now - timedelta(hours=24)
     raw_items = [
@@ -51,8 +51,7 @@ def test_normalize_items_accepts_ai_tag_fallback() -> None:
     ]
 
     normalized = normalize_items(raw_items, since=since, until=now)
-    assert len(normalized) == 1
-    assert normalized[0].item_id
+    assert normalized == []
 
 
 def test_normalize_items_drop_missing_published_at() -> None:

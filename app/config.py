@@ -7,6 +7,7 @@ from typing import Any
 
 import yaml
 
+from app.env_utils import load_local_env
 from app.models import Settings, SourceConfig
 
 _ENV_PATTERN = re.compile(r"\$\{([A-Z0-9_]+)(?::-([^}]*))?\}")
@@ -41,6 +42,7 @@ def _load_yaml(path: str) -> dict[str, Any]:
 
 
 def load_settings(path: str = "config/settings.yaml") -> Settings:
+    load_local_env(path)
     raw = _load_yaml(path)
     settings = Settings(**raw)
     Path(settings.archives_dir).mkdir(parents=True, exist_ok=True)
@@ -49,6 +51,7 @@ def load_settings(path: str = "config/settings.yaml") -> Settings:
 
 
 def load_sources(path: str = "config/sources.yaml") -> list[SourceConfig]:
+    load_local_env(path)
     raw = _load_yaml(path)
     sources = raw.get("sources", [])
     return [SourceConfig(**item) for item in sources if item.get("enabled", True)]

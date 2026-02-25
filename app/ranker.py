@@ -128,14 +128,5 @@ def select_items_with_mix(
                 continue
             _add_item(item)
 
-    # 若来源上限导致不足 item_min，则放宽上限兜底
-    if len(selected) < item_min:
-        for item in ranked_items:
-            if len(selected) >= item_min:
-                break
-            if not _can_add(item, enforce_source_cap=False):
-                continue
-            _add_item(item)
-
     selected.sort(key=lambda x: x.score, reverse=True)
     return selected[:item_max]

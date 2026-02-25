@@ -27,6 +27,13 @@ AI_KEYWORDS = {
     "gpt",
     "claude",
     "gemini",
+    "云",
+    "云计算",
+    "算力",
+    "机器人",
+    "自动驾驶",
+    "智能驾驶",
+    "芯片",
 }
 
 _TRACKING_QUERY_KEYS = {
@@ -74,11 +81,6 @@ def is_ai_related(title: str, content: str, tags: list[str]) -> bool:
     if any(keyword in merged for keyword in AI_KEYWORDS):
         return True
 
-    tag_set = {tag.lower() for tag in tags}
-    if "ai" in tag_set:
-        return True
-    if {"technology", "research", "official"} & tag_set and len(title) >= 10:
-        return True
     return False
 
 

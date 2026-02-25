@@ -1,42 +1,95 @@
 sources:
-  - name: 新智元(公众号公开转载)
+  - name: AITNT AI资讯(聚合源)
     type: html
     url: https://www.aitntnews.com/
-    article_selector: "a[href*='newDetail']"
+    article_selector: "article.news-item .new-head a[href*='newDetail']"
     link_pattern: "newDetail\\.html\\?newId="
+    item_container_selector: "article.news-item"
     date_selector: "div[style*='text-align: right']"
     date_regex: "\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}"
-    weight: 1.5
+    weight: 1.1
+    split_source_by_publisher: true
     enabled: true
-    tags: ["ai", "china", "wechat", "media", "industry"]
+    tags: ["ai", "china", "portal", "aggregator", "industry"]
+
+  - name: 数字生命卡兹克(微信主页直连)
+    type: wechat_profile
+    url: https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzIyMzA5NjEyMA==#wechat_redirect
+    wechat_biz: MzIyMzA5NjEyMA==
+    weight: 2.6
+    enabled: true  # 需设置环境变量 WECHAT_COOKIE
+    tags: ["ai", "china", "wechat", "official", "self_media", "personal", "creator", "priority_top"]
+
+  - name: MindCode(微信主页直连)
+    type: wechat_profile
+    url: https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzAxNTYwMzcyNw==#wechat_redirect
+    wechat_biz: MzAxNTYwMzcyNw==
+    weight: 1.3
+    enabled: true  # 需设置环境变量 WECHAT_COOKIE
+    tags: ["ai", "china", "wechat", "official", "self_media", "creator", "product"]
+
+  - name: 数字生命卡兹克(虎嗅同号转载优先)
+    type: rss
+    url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/member/9470477/article
+    weight: 2.5
+    enabled: true
+    tags: ["ai", "china", "huxiu", "repost", "self_media", "personal", "creator", "priority_top"]
+
+  - name: MindCode(虎嗅同号转载优先)
+    type: rss
+    url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/MindCode%20%E5%91%A8%E6%8A%A5
+    weight: 1.35
+    enabled: false  # 该账号在虎嗅暂未稳定检索到，优先走搜狗降级源
+    required_author_keywords_any: ["MindCode"]
+    required_keywords_any: ["本文来自微信公众号： MindCode", "本文来自微信公众号：MindCode", "MindCode"]
+    tags: ["ai", "china", "huxiu", "repost", "self_media", "creator", "product"]
 
   - name: 数字生命卡兹克(知乎专栏主源)
     type: rss
     url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/%E6%95%B0%E5%AD%97%E7%94%9F%E5%91%BD%E5%8D%A1%E5%85%B9%E5%85%8B%20%E7%9F%A5%E4%B9%8E
     weight: 2.3
-    enabled: true  # 依赖本地 RSSHub（scripts/rsshub/start_rsshub.sh）
+    enabled: false  # huxiu/search 为泛检索，易误归因
+    required_keywords_any: ["数字生命卡兹克"]
     tags: ["ai", "china", "zhihu", "repost", "self_media", "personal", "creator", "priority_top"]
 
   - name: 数字生命卡兹克(腾讯新闻镜像)
     type: rss
     url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/%E6%95%B0%E5%AD%97%E7%94%9F%E5%91%BD%E5%8D%A1%E5%85%B9%E5%85%8B%20%E8%85%BE%E8%AE%AF
     weight: 2.2
-    enabled: true  # 依赖本地 RSSHub
+    enabled: false  # huxiu/search 为泛检索，易误归因
+    required_keywords_any: ["数字生命卡兹克"]
     tags: ["ai", "china", "qq_news", "repost", "self_media", "personal", "creator", "priority_top"]
 
   - name: 数字生命卡兹克(虎嗅转载)
     type: rss
     url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/%E6%95%B0%E5%AD%97%E7%94%9F%E5%91%BD%E5%8D%A1%E5%85%B9%E5%85%8B
     weight: 2.05
-    enabled: true  # 依赖本地 RSSHub
+    enabled: false  # huxiu/search 为泛检索，易误归因
+    required_keywords_any: ["数字生命卡兹克"]
     tags: ["ai", "china", "huxiu", "repost", "self_media", "personal", "creator", "priority_top"]
 
   - name: 数字生命卡兹克(51CTO转载)
     type: rss
     url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/%E6%95%B0%E5%AD%97%E7%94%9F%E5%91%BD%E5%8D%A1%E5%85%B9%E5%85%8B%2051CTO
     weight: 1.95
-    enabled: true  # 依赖本地 RSSHub
+    enabled: false  # huxiu/search 为泛检索，易误归因
+    required_keywords_any: ["数字生命卡兹克"]
     tags: ["ai", "china", "51cto", "repost", "self_media", "personal", "creator", "priority_top"]
+
+  - name: 数字生命卡兹克(搜狗微信检索)
+    type: html
+    url: https://weixin.sogou.com/weixin?type=2&query=%E6%95%B0%E5%AD%97%E7%94%9F%E5%91%BD%E5%8D%A1%E5%85%B9%E5%85%8B%20AI
+    article_selector: "ul.news-list li h3 a"
+    link_pattern: "/link\\?url="
+    item_container_selector: "ul.news-list li"
+    date_selector: "span.s2 script"
+    date_regex: "(?<=timeConvert\\(')\\d{10}(?='\\))"
+    author_selector: "span.all-time-y2"
+    required_author_keywords_any: ["数字生命卡兹克"]
+    resolve_sogou_redirect: true
+    weight: 2.0
+    enabled: true
+    tags: ["ai", "china", "wechat", "search", "self_media", "personal", "creator", "priority_top"]
 
   - name: 53AI(刘小排r)
     type: html
@@ -47,18 +100,27 @@ sources:
     enabled: false  # 53ai 主要为产品页，无文章列表
     tags: ["ai", "china", "wechat", "repost", "self_media", "personal", "creator", "technology"]
 
-  - name: MindCode(公众号公开转载)
-    type: rss
-    url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/MindCode%20%E5%85%AC%E4%BC%97%E5%8F%B7
+  - name: MindCode(搜狗微信检索)
+    type: html
+    url: https://weixin.sogou.com/weixin?type=2&query=gh_5a7f423dd514%20MindCode
+    article_selector: "ul.news-list li h3 a"
+    link_pattern: "/link\\?url="
+    item_container_selector: "ul.news-list li"
+    date_selector: "span.s2 script"
+    date_regex: "(?<=timeConvert\\(')\\d{10}(?='\\))"
+    author_selector: "span.all-time-y2"
+    required_author_keywords_any: ["MindCode"]
+    resolve_sogou_redirect: true
     weight: 1.05
-    enabled: true  # 依赖本地 RSSHub
-    tags: ["ai", "china", "wechat", "repost", "self_media", "creator", "product"]
+    enabled: true
+    tags: ["ai", "china", "wechat", "search", "self_media", "creator", "product"]
 
   - name: AGENT橘(公众号公开转载)
     type: rss
     url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/AGENT%E6%A9%98%20OpenClaw
     weight: 1.2
     enabled: true  # 依赖本地 RSSHub
+    required_keywords_any: ["AGENT橘", "OpenClaw"]
     tags: ["ai", "china", "wechat", "repost", "self_media", "personal", "creator", "technology"]
 
   - name: Founder Park(公众号公开转载)
@@ -66,6 +128,7 @@ sources:
     url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/Founder%20Park
     weight: 1.2
     enabled: true  # 依赖本地 RSSHub
+    required_keywords_any: ["Founder Park"]
     tags: ["ai", "china", "wechat", "repost", "self_media", "creator", "industry"]
 
   - name: 刘小排r(公众号公开转载)
@@ -73,6 +136,7 @@ sources:
     url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/%E5%88%98%E5%B0%8F%E6%8E%92r%2053AI
     weight: 1.25
     enabled: true  # 依赖本地 RSSHub
+    required_keywords_any: ["刘小排r", "53AI"]
     tags: ["ai", "china", "wechat", "repost", "self_media", "personal", "creator", "technology"]
 
   - name: 42章经(公众号公开转载)
@@ -80,6 +144,7 @@ sources:
     url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/42%E7%AB%A0%E7%BB%8F%20AI
     weight: 1.15
     enabled: true  # 依赖本地 RSSHub
+    required_keywords_any: ["42章经"]
     tags: ["ai", "china", "wechat", "repost", "self_media", "personal", "industry"]
 
   - name: 歸藏(公众号公开转载)
@@ -87,16 +152,15 @@ sources:
     url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/%E6%AD%B8%E8%97%8F%20AI
     weight: 1.1
     enabled: true  # 依赖本地 RSSHub
+    required_keywords_any: ["歸藏", "归藏"]
     tags: ["ai", "china", "wechat", "repost", "self_media", "personal", "creator", "technology"]
 
-  - name: 机器之心(公众号公开页)
-    type: html
-    url: https://www.jiqizhixin.com/
-    article_selector: "h2 a, h3 a, article a, a[href*='reference']"
-    link_pattern: "(jiqizhixin\\.com|pro\\.jiqizhixin\\.com)"
+  - name: 机器之心(RSS)
+    type: rss
+    url: https://www.jiqizhixin.com/rss
     weight: 1.3
     enabled: true
-    tags: ["ai", "china", "wechat", "media", "technology"]
+    tags: ["ai", "china", "media", "technology"]
 
   - name: 量子位(公开页)
     type: html
@@ -145,10 +209,8 @@ sources:
     tags: ["ai", "china", "media", "industry"]
 
   - name: InfoQ China AI
-    type: html
-    url: https://www.infoq.cn/topic/AI
-    article_selector: "a[href*='/article/'], a[href*='/news/']"
-    link_pattern: "infoq\\.cn/(article|news)/"
+    type: rss
+    url: https://www.infoq.cn/feed/AI
     weight: 1.2
     enabled: true
     tags: ["ai", "china", "portal", "technology"]

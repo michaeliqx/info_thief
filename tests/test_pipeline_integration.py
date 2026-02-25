@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+import sqlite3
 
 import yaml
 
@@ -21,6 +22,7 @@ def test_pipeline_generates_brief_and_archives(tmp_path, monkeypatch) -> None:
         "item_min": 8,
         "item_max": 12,
         "mix_min_each": 2,
+        "max_items_per_source": 20,
         "llm_provider": "openai",
         "llm_model": "gpt-4o-mini",
         "wechat_webhook": "",
@@ -203,3 +205,59 @@ def test_pipeline_pushes_to_feishu_targets(tmp_path, monkeypatch) -> None:
 
     assert len(push_calls) == 1
     assert push_calls[0]["receive_id"] == "oc_test_group"
+
+
+def test_pipeline_push_false_does_not_mark_seen(tmp_path, monkeypatch) -> None:
+    settings_path = tmp_path / "settings.yaml"
+    sources_path = tmp_path / "sources.yaml"
+    db_path = tmp_path / "state.db"
+    archives_dir = tmp_path / "archives"
+
+    settings = {
+        "timezone": "Asia/Shanghai",
+        "item_min": 1,
+        "item_max": 2,
+        "mix_min_each": 1,
+        "llm_provider": "openai",
+        "llm_model": "gpt-4o-mini",
+        "push_enabled": False,
+        "wechat_webhook": "",
+        "openai_api_key": "",
+        "request_timeout_seconds": 3,
+        "db_path": str(db_path),
+        "archives_dir": str(archives_dir),
+        "log_level": "INFO",
+    }
+    sources = {"sources": [{"name": "dummy", "type": "rss", "url": "https://example.com/rss", "enabled": True}]}
+    settings_path.write_text(yaml.safe_dump(settings, allow_unicode=True), encoding="utf-8")
+    sources_path.write_text(yaml.safe_dump(sources, allow_unicode=True), encoding="utf-8")
+
+    now = datetime.now(timezone.utc)
+
+    def _fake_collect_all_sources(_sources, _timeout, proxy=None):
+        item = RawItem(
+            source_name="dummy",
+            source_weight=1.2,
+            url="https://example.com/recent",
+            title="公司发布 AI 应用",
+            content="这是刚刚发现的 AI 资讯",
+            published_at=now - timedelta(hours=1),
+            discovered_at=now,
+            tags=["ai", "product"],
+        )
+        return [item], {}
+
+    monkeypatch.setattr("app.pipeline.collect_all_sources", _fake_collect_all_sources)
+
+    brief = run_daily_pipeline(
+        settings_path=str(settings_path),
+        sources_path=str(sources_path),
+        llm_client=FallbackLLMClient(),
+        push=False,
+        now=now,
+    )
+    assert len(brief.items) == 1
+
+    with sqlite3.connect(str(db_path)) as conn:
+        seen_count = conn.execute("SELECT COUNT(*) FROM seen_items").fetchone()[0]
+    assert seen_count == 0

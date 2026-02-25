@@ -57,6 +57,27 @@ class StateStore:
                 [(item_id, canonical_url, now) for item_id, canonical_url in items],
             )
 
+    def has_recent_successful_push_run(self, hours: int = 24) -> bool:
+        since = datetime.now(timezone.utc) - timedelta(hours=hours)
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT metrics_json
+                FROM run_logs
+                WHERE status = 'success' AND run_at >= ?
+                ORDER BY id DESC
+                """,
+                (since.isoformat(),),
+            ).fetchall()
+        for row in rows:
+            try:
+                metrics = json.loads(row["metrics_json"] or "{}")
+            except json.JSONDecodeError:
+                continue
+            if metrics.get("push_enabled") and int(metrics.get("selected_count") or 0) > 0:
+                return True
+        return False
+
     def log_run(self, status: str, metrics: dict, error_message: str | None = None) -> None:
         with self._connect() as conn:
             conn.execute(

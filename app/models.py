@@ -68,7 +68,7 @@ class DailyBrief(BaseModel):
 
 class SourceConfig(BaseModel):
     name: str
-    type: Literal["rss", "html"]
+    type: Literal["rss", "html", "wechat_profile"]
     url: str
     article_selector: Optional[str] = None
     link_pattern: Optional[str] = None
@@ -80,6 +80,12 @@ class SourceConfig(BaseModel):
     date_selector: Optional[str] = None  # 日期元素选择器，如 "time" 或 "div[style*='text-align: right']"
     date_attr: Optional[str] = None  # 日期属性名，如 "datetime"；为空则从元素文本解析
     date_regex: Optional[str] = None  # 从文本提取日期的正则，如 r"\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}"
+    author_selector: Optional[str] = None  # 作者/来源元素选择器（常用于搜索结果页的公众号名）
+    required_keywords_any: list[str] = Field(default_factory=list)  # 命中任一关键词才保留（多用于搜索型来源）
+    required_author_keywords_any: list[str] = Field(default_factory=list)  # 作者命中任一关键词才保留
+    resolve_sogou_redirect: bool = False  # 对搜狗 /link 页面做跳转链接还原
+    wechat_biz: Optional[str] = None  # wechat_profile 源使用的 __biz
+    split_source_by_publisher: bool = False  # 聚合源按正文里的发布方拆分 source_name
 
 
 class Settings(BaseModel):

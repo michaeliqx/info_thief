@@ -47,3 +47,31 @@ def test_load_sources_resolves_env_default_value(tmp_path, monkeypatch) -> None:
 
     sources = load_sources(str(sources_path))
     assert sources[0].url == "http://0.0.0.0:1200/huxiu/search/AI"
+
+
+def test_load_sources_reads_local_dotenv(tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("RSSHUB_BASE_URL", raising=False)
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".env").write_text("RSSHUB_BASE_URL=http://127.0.0.1:1200\n", encoding="utf-8")
+
+    config_dir = tmp_path / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    sources_path = config_dir / "sources.yaml"
+    sources_path.write_text(
+        yaml.safe_dump(
+            {
+                "sources": [
+                    {
+                        "name": "s1",
+                        "type": "rss",
+                        "url": "${RSSHUB_BASE_URL}/huxiu/search/AI",
+                    }
+                ]
+            },
+            allow_unicode=True,
+        ),
+        encoding="utf-8",
+    )
+
+    sources = load_sources(str(sources_path))
+    assert sources[0].url == "http://127.0.0.1:1200/huxiu/search/AI"

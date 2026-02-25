@@ -66,6 +66,48 @@ def collect_all_sources(
     return raw_items, source_errors
 
 
+def _build_source_hit_stats(
+    raw_items: list,
+    sources: list[SourceConfig],
+    since: datetime,
+    until: datetime,
+) -> tuple[dict[str, int], dict[str, int]]:
+    raw_counts = {source.name: 0 for source in sources}
+    recent_counts = {source.name: 0 for source in sources}
+    source_names = [source.name for source in sources]
+
+    for item in raw_items:
+        source_name = getattr(item, "source_name", "")
+        if source_name not in raw_counts:
+            raw_counts[source_name] = 0
+            recent_counts[source_name] = 0
+        raw_counts[source_name] += 1
+        published_at = getattr(item, "published_at", None)
+        if published_at and since <= published_at <= until:
+            recent_counts[source_name] += 1
+
+        # 聚合源拆分为“源名/发布方”后，同时回填到父源计数，避免父源日志误报 source_miss。
+        for base_name in source_names:
+            prefix = f"{base_name}/"
+            if source_name.startswith(prefix):
+                raw_counts[base_name] = raw_counts.get(base_name, 0) + 1
+                if published_at and since <= published_at <= until:
+                    recent_counts[base_name] = recent_counts.get(base_name, 0) + 1
+                break
+
+    return raw_counts, recent_counts
+
+
+def _log_source_hit_stats(raw_counts: dict[str, int], recent_counts: dict[str, int]) -> None:
+    for source_name in sorted(raw_counts):
+        raw_count = raw_counts.get(source_name, 0)
+        recent_count = recent_counts.get(source_name, 0)
+        if raw_count == 0:
+            logger.warning("source_miss | %s | raw=0 | within24h=0", source_name)
+        else:
+            logger.info("source_hit | %s | raw=%d | within24h=%d", source_name, raw_count, recent_count)
+
+
 def _build_brief(
     selected_items: list[RankedItem],
     llm: LLMClient,
@@ -170,13 +212,35 @@ def run_daily_pipeline(
             run_time = run_time.replace(tzinfo=timezone.utc)
         since = run_time - timedelta(hours=24)
 
+        raw_counts, recent_counts = _build_source_hit_stats(raw_items, sources, since=since, until=run_time)
+        _log_source_hit_stats(raw_counts, recent_counts)
+        metrics["source_raw_counts"] = raw_counts
+        metrics["source_recent_24h_counts"] = recent_counts
+
         normalized = normalize_items(raw_items, since=since, until=run_time)
         metrics["normalized_count"] = len(normalized)
 
         seen_ids = store.load_seen_item_ids(days=7)
-        normalized = [item for item in normalized if item.item_id not in seen_ids]
+        metrics["seen_pool_count"] = len(seen_ids)
+        metrics["seen_filtered_count"] = 0
+        metrics["seen_filter_relaxed"] = False
 
-        deduped = dedupe_items(normalized)
+        normalized_after_seen = [item for item in normalized if item.item_id not in seen_ids]
+        metrics["seen_filtered_count"] = len(normalized) - len(normalized_after_seen)
+        metrics["after_seen_count"] = len(normalized_after_seen)
+
+        # 当天还没有真实成功推送时，避免“仅因调试/历史状态导致全量被 seen 拦截”而产出空报告。
+        if push_enabled and normalized and not normalized_after_seen:
+            has_recent_push = store.has_recent_successful_push_run(hours=24)
+            if not has_recent_push:
+                logger.warning(
+                    "All normalized items filtered by seen cache (%d), relax once because no successful push in 24h",
+                    len(normalized),
+                )
+                normalized_after_seen = normalized
+                metrics["seen_filter_relaxed"] = True
+
+        deduped = dedupe_items(normalized_after_seen)
         metrics["deduped_count"] = len(deduped)
 
         classified = classify_items(deduped, llm_client=llm, use_llm_fallback=False)
@@ -227,7 +291,10 @@ def run_daily_pipeline(
             if push_errors:
                 raise RuntimeError(f"Push failed: {', '.join(push_errors)}")
 
-        store.mark_seen([(item.item_id, item.canonical_url) for item in selected])
+        if push_enabled:
+            store.mark_seen([(item.item_id, item.canonical_url) for item in selected])
+        else:
+            logger.info("Skip mark_seen because push is disabled")
         store.log_run(status="success", metrics=metrics)
         return brief
 
