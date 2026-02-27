@@ -12,8 +12,10 @@ RSSHUB_START_SCRIPT="${RSSHUB_START_SCRIPT:-$PROJECT_DIR/scripts/rsshub/start_rs
 RSSHUB_WAIT_SECONDS="${RSSHUB_WAIT_SECONDS:-60}"
 RSSHUB_LOG_FILE="${RSSHUB_LOG_FILE:-$PROJECT_DIR/logs/rsshub.log}"
 
+# RSSHub 首次请求约 3s（冷启动），需大于此值；端口监听前 connect 很快失败
+RSSHUB_HEALTH_TIMEOUT="${RSSHUB_HEALTH_TIMEOUT:-10}"
 health_check() {
-  curl -fsS --max-time 2 "$RSSHUB_BASE_URL/" >/dev/null 2>&1
+  curl -fsS --max-time "$RSSHUB_HEALTH_TIMEOUT" "$RSSHUB_BASE_URL/" >/dev/null 2>&1
 }
 
 if health_check; then

@@ -17,7 +17,7 @@ def _detect_local_rsshub(sources: list[SourceConfig]) -> tuple[str, int] | None:
         host = (parsed.hostname or "").strip().lower()
         if host not in {"127.0.0.1", "localhost", "0.0.0.0"}:
             continue
-        if not parsed.path.startswith("/huxiu/"):
+        if not (parsed.path.startswith("/huxiu/") or parsed.path.startswith("/freewechat/")):
             continue
         port = parsed.port or 80
         return host, port

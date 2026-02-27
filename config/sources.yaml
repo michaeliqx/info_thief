@@ -155,6 +155,58 @@ sources:
     required_keywords_any: ["歸藏", "归藏"]
     tags: ["ai", "china", "wechat", "repost", "self_media", "personal", "creator", "technology"]
 
+  - name: AI科技大本营(搜狗微信检索)
+    type: html
+    url: https://weixin.sogou.com/weixin?type=2&query=AI%E7%A7%91%E6%8A%80%E5%A4%A7%E6%9C%AC%E8%90%A5
+    article_selector: "ul.news-list li h3 a"
+    link_pattern: "/link\\?url="
+    item_container_selector: "ul.news-list li"
+    date_selector: "span.s2 script"
+    date_regex: "(?<=timeConvert\\(')\\d{10}(?='\\))"
+    author_selector: "span.all-time-y2"
+    required_author_keywords_any: ["AI科技大本营"]
+    resolve_sogou_redirect: true
+    weight: 1.2
+    enabled: true
+    tags: ["ai", "china", "wechat", "search", "self_media", "creator", "technology"]
+
+  - name: 蔡荔谈AI(搜狗微信检索)
+    type: html
+    url: https://weixin.sogou.com/weixin?type=2&query=%E8%94%A1%E8%8D%94%E8%B0%88AI
+    article_selector: "ul.news-list li h3 a"
+    link_pattern: "/link\\?url="
+    item_container_selector: "ul.news-list li"
+    date_selector: "span.s2 script"
+    date_regex: "(?<=timeConvert\\(')\\d{10}(?='\\))"
+    author_selector: "span.all-time-y2"
+    required_author_keywords_any: ["蔡荔谈AI"]
+    resolve_sogou_redirect: true
+    weight: 1.2
+    enabled: true
+    tags: ["ai", "china", "wechat", "search", "self_media", "personal", "creator", "technology"]
+
+  - name: Andy730(搜狗微信检索)
+    type: html
+    url: https://weixin.sogou.com/weixin?type=2&query=Andy730
+    article_selector: "ul.news-list li h3 a"
+    link_pattern: "/link\\?url="
+    item_container_selector: "ul.news-list li"
+    date_selector: "span.s2 script"
+    date_regex: "(?<=timeConvert\\(')\\d{10}(?='\\))"
+    author_selector: "span.all-time-y2"
+    required_author_keywords_any: ["Andy730"]
+    resolve_sogou_redirect: true
+    weight: 1.2
+    enabled: true
+    tags: ["ai", "china", "wechat", "search", "self_media", "personal", "creator", "technology"]
+
+  - name: Xsignal(虎嗅专栏)
+    type: rss
+    url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/member/12888029/article
+    weight: 1.2
+    enabled: true
+    tags: ["ai", "china", "huxiu", "creator", "industry", "data"]
+
   - name: 机器之心(RSS)
     type: rss
     url: https://www.jiqizhixin.com/rss
