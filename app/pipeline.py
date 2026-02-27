@@ -108,6 +108,32 @@ def _log_source_hit_stats(raw_counts: dict[str, int], recent_counts: dict[str, i
             logger.info("source_hit | %s | raw=%d | within24h=%d", source_name, raw_count, recent_count)
 
 
+def _build_importance_fallback(selected_items: list[RankedItem]) -> dict[str, str]:
+    total = len(selected_items)
+    if total == 0:
+        return {}
+    if total == 1:
+        return {selected_items[0].item_id: "high"}
+    if total == 2:
+        return {
+            selected_items[0].item_id: "high",
+            selected_items[1].item_id: "medium",
+        }
+
+    high_cutoff = max(1, round(total * 0.35))
+    low_cutoff = max(high_cutoff + 1, total - max(1, round(total * 0.2)))
+
+    importance_map: dict[str, str] = {}
+    for idx, item in enumerate(selected_items):
+        if idx < high_cutoff:
+            importance_map[item.item_id] = "high"
+        elif idx >= low_cutoff:
+            importance_map[item.item_id] = "low"
+        else:
+            importance_map[item.item_id] = "medium"
+    return importance_map
+
+
 def _build_brief(
     selected_items: list[RankedItem],
     llm: LLMClient,
@@ -115,15 +141,40 @@ def _build_brief(
     tz_name: str,
 ) -> DailyBrief:
     brief_items: list[BriefItem] = []
+    importance_fallback = _build_importance_fallback(selected_items)
     for item in selected_items:
         try:
-            key_points = llm.summarize_item(item.title, item.content, item.source_name, item.url)
+            summary = llm.summarize_item_structured(
+                item.title,
+                item.content,
+                item.source_name,
+                item.url,
+                perspective=item.perspective,
+            )
         except Exception:  # noqa: BLE001
-            key_points = FallbackLLMClient().summarize_item(item.title, item.content, item.source_name, item.url)
+            summary = FallbackLLMClient().summarize_item_structured(
+                item.title,
+                item.content,
+                item.source_name,
+                item.url,
+                perspective=item.perspective,
+            )
 
-        key_points = [p for p in key_points if p][:4]
+        key_points = [str(p).strip() for p in summary.get("points", []) if str(p).strip()][:4]
         if len(key_points) < 2:
             key_points.append("建议阅读原文了解完整信息。")
+
+        importance = str(summary.get("importance") or "").strip().lower()
+        if importance not in {"high", "medium", "low"}:
+            importance = importance_fallback.get(item.item_id, "medium")
+
+        why_it_matters = str(summary.get("why_it_matters") or "").strip()
+        if not why_it_matters:
+            why_it_matters = "该信息可能影响后续选题优先级与资源投入，建议结合业务目标跟踪。"
+
+        stance = str(summary.get("stance") or "").strip()
+        if not stance:
+            stance = "优先关注可验证的落地信号与业务指标，避免被单点叙事带节奏。"
 
         brief_items.append(
             BriefItem(
@@ -133,6 +184,9 @@ def _build_brief(
                 source_name=item.source_name,
                 url=item.url,
                 score=item.score,
+                importance=importance,  # type: ignore[arg-type]
+                why_it_matters=why_it_matters,
+                stance=stance,
             )
         )
 

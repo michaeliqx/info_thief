@@ -55,6 +55,9 @@ class BriefItem(BaseModel):
     source_name: str
     url: str
     score: float
+    importance: Literal["high", "medium", "low"] = "medium"
+    why_it_matters: str = ""
+    stance: str = ""
 
 
 class DailyBrief(BaseModel):

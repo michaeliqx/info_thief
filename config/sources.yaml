@@ -115,6 +115,170 @@ sources:
     enabled: true
     tags: ["ai", "china", "wechat", "search", "self_media", "creator", "product"]
 
+  - name: 笔记侠(搜狗微信检索)
+    type: html
+    url: https://weixin.sogou.com/weixin?type=2&query=%E7%AC%94%E8%AE%B0%E4%BE%A0%20AI
+    article_selector: "ul.news-list li h3 a"
+    link_pattern: "/link\\?url="
+    item_container_selector: "ul.news-list li"
+    date_selector: "span.s2 script"
+    date_regex: "(?<=timeConvert\\(')\\d{10}(?='\\))"
+    author_selector: "span.all-time-y2"
+    required_author_keywords_any: ["笔记侠"]
+    required_keywords_any: ["AI", "人工智能", "大模型", "智能体", "Agent"]
+    resolve_sogou_redirect: true
+    weight: 1.1
+    enabled: true
+    tags: ["ai", "china", "wechat", "search", "self_media", "creator", "industry"]
+
+  - name: 晚点再听LaterCast(小宇宙)
+    type: rss
+    url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/xiaoyuzhou/podcast/61933ace1b4320461e91fd55?limit=20
+    weight: 1.2
+    enabled: true
+    tags: ["ai", "china", "podcast", "media", "industry"]
+
+  - name: AGI Hunt/GPT Hunt(搜狗微信检索)
+    type: html
+    url: https://weixin.sogou.com/weixin?type=2&query=AGI%20Hunt
+    article_selector: "ul.news-list li h3 a"
+    link_pattern: "/link\\?url="
+    item_container_selector: "ul.news-list li"
+    date_selector: "span.s2 script"
+    date_regex: "(?<=timeConvert\\(')\\d{10}(?='\\))"
+    author_selector: "span.all-time-y2"
+    required_author_keywords_any: ["AGI Hunt", "AGIHunt", "GPT Hunt"]
+    required_keywords_any: ["AI", "AGI", "大模型", "智能体", "Agent"]
+    resolve_sogou_redirect: true
+    weight: 1.2
+    enabled: true
+    tags: ["ai", "china", "wechat", "search", "self_media", "creator", "technology"]
+
+  - name: 海外独角兽(搜狗微信检索)
+    type: html
+    url: https://weixin.sogou.com/weixin?type=2&query=%E6%B5%B7%E5%A4%96%E7%8B%AC%E8%A7%92%E5%85%BD%20AI
+    article_selector: "ul.news-list li h3 a"
+    link_pattern: "/link\\?url="
+    item_container_selector: "ul.news-list li"
+    date_selector: "span.s2 script"
+    date_regex: "(?<=timeConvert\\(')\\d{10}(?='\\))"
+    author_selector: "span.all-time-y2"
+    required_author_keywords_any: ["海外独角兽"]
+    required_keywords_any: ["AI", "人工智能", "大模型", "智能体", "Agent"]
+    resolve_sogou_redirect: true
+    weight: 1.05
+    enabled: true
+    tags: ["ai", "china", "wechat", "search", "self_media", "industry"]
+
+  - name: 宝玉AI(搜狗微信检索)
+    type: html
+    url: https://weixin.sogou.com/weixin?type=2&query=%E5%AE%9D%E7%8E%89AI
+    article_selector: "ul.news-list li h3 a"
+    link_pattern: "/link\\?url="
+    item_container_selector: "ul.news-list li"
+    date_selector: "span.s2 script"
+    date_regex: "(?<=timeConvert\\(')\\d{10}(?='\\))"
+    author_selector: "span.all-time-y2"
+    required_author_keywords_any: ["宝玉AI"]
+    required_keywords_any: ["AI", "人工智能", "大模型", "智能体", "Agent"]
+    resolve_sogou_redirect: true
+    weight: 1.15
+    enabled: true
+    tags: ["ai", "china", "wechat", "search", "self_media", "creator", "technology"]
+
+  - name: 懂点儿AI(搜狗微信检索)
+    type: html
+    url: https://weixin.sogou.com/weixin?type=2&query=%E6%87%82%E7%82%B9%E5%84%BFAI
+    article_selector: "ul.news-list li h3 a"
+    link_pattern: "/link\\?url="
+    item_container_selector: "ul.news-list li"
+    date_selector: "span.s2 script"
+    date_regex: "(?<=timeConvert\\(')\\d{10}(?='\\))"
+    author_selector: "span.all-time-y2"
+    required_keywords_any: ["AI", "人工智能", "大模型", "智能体", "Agent"]
+    resolve_sogou_redirect: true
+    weight: 1.1
+    enabled: true
+    tags: ["ai", "china", "wechat", "search", "self_media", "creator", "technology"]
+
+  - name: Z Potentials(搜狗微信检索)
+    type: html
+    url: https://weixin.sogou.com/weixin?type=2&query=Z%20Potentials%20AI
+    article_selector: "ul.news-list li h3 a"
+    link_pattern: "/link\\?url="
+    item_container_selector: "ul.news-list li"
+    date_selector: "span.s2 script"
+    date_regex: "(?<=timeConvert\\(')\\d{10}(?='\\))"
+    author_selector: "span.all-time-y2"
+    required_author_keywords_any: ["Z Potentials"]
+    required_keywords_any: ["AI", "人工智能", "大模型", "智能体", "Agent"]
+    resolve_sogou_redirect: true
+    weight: 1.05
+    enabled: true
+    tags: ["ai", "china", "wechat", "search", "self_media", "creator", "industry"]
+
+  - name: 红杉汇(搜狗微信检索)
+    type: html
+    url: https://weixin.sogou.com/weixin?type=2&query=%E7%BA%A2%E6%9D%89%E6%B1%87%20AI
+    article_selector: "ul.news-list li h3 a"
+    link_pattern: "/link\\?url="
+    item_container_selector: "ul.news-list li"
+    date_selector: "span.s2 script"
+    date_regex: "(?<=timeConvert\\(')\\d{10}(?='\\))"
+    author_selector: "span.all-time-y2"
+    required_author_keywords_any: ["红杉汇"]
+    required_keywords_any: ["AI", "人工智能", "大模型", "智能体", "Agent"]
+    resolve_sogou_redirect: true
+    weight: 1.1
+    enabled: true
+    tags: ["ai", "china", "wechat", "search", "official", "industry", "vc"]
+
+  - name: AI科技大本营(搜狗微信检索)
+    type: html
+    url: https://weixin.sogou.com/weixin?type=2&query=AI%E7%A7%91%E6%8A%80%E5%A4%A7%E6%9C%AC%E8%90%A5
+    article_selector: "ul.news-list li h3 a"
+    link_pattern: "/link\\?url="
+    item_container_selector: "ul.news-list li"
+    date_selector: "span.s2 script"
+    date_regex: "(?<=timeConvert\\(')\\d{10}(?='\\))"
+    author_selector: "span.all-time-y2"
+    required_author_keywords_any: ["AI科技大本营"]
+    required_keywords_any: ["AI", "人工智能", "大模型", "智能体", "Agent"]
+    resolve_sogou_redirect: true
+    weight: 1.2
+    enabled: true
+    tags: ["ai", "china", "wechat", "search", "media", "technology"]
+
+  - name: Founder Park(搜狗微信检索兜底)
+    type: html
+    url: https://weixin.sogou.com/weixin?type=2&query=Founder%20Park
+    article_selector: "ul.news-list li h3 a"
+    link_pattern: "/link\\?url="
+    item_container_selector: "ul.news-list li"
+    date_selector: "span.s2 script"
+    date_regex: "(?<=timeConvert\\(')\\d{10}(?='\\))"
+    author_selector: "span.all-time-y2"
+    required_keywords_any: ["Founder Park"]
+    resolve_sogou_redirect: true
+    weight: 1.15
+    enabled: true
+    tags: ["ai", "china", "wechat", "search", "self_media", "creator", "industry"]
+
+  - name: 刘小排(搜狗微信检索兜底)
+    type: html
+    url: https://weixin.sogou.com/weixin?type=2&query=%E5%88%98%E5%B0%8F%E6%8E%92%20AI
+    article_selector: "ul.news-list li h3 a"
+    link_pattern: "/link\\?url="
+    item_container_selector: "ul.news-list li"
+    date_selector: "span.s2 script"
+    date_regex: "(?<=timeConvert\\(')\\d{10}(?='\\))"
+    author_selector: "span.all-time-y2"
+    required_keywords_any: ["刘小排", "刘小排r", "53AI"]
+    resolve_sogou_redirect: true
+    weight: 1.2
+    enabled: true
+    tags: ["ai", "china", "wechat", "search", "self_media", "creator", "technology"]
+
   - name: AGENT橘(公众号公开转载)
     type: rss
     url: ${RSSHUB_BASE_URL:-http://0.0.0.0:1200}/huxiu/search/AGENT%E6%A9%98%20OpenClaw

@@ -18,12 +18,6 @@ pip install -e .[dev]
 export ARK_API_KEY="你的火山引擎ARK API Key"
 ```
 
-如需启用企业微信推送，再额外配置：
-
-```bash
-export WECOM_WEBHOOK_URL="你的企业微信机器人Webhook"
-```
-
 如需启用飞书（指令 + 推送），再额外配置：
 
 ```bash

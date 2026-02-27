@@ -11,6 +11,33 @@ import httpx
 from app.models import DailyBrief
 
 
+def _perspective_label(value: str) -> str:
+    mapping = {
+        "product": "产品视角",
+        "technology": "技术视角",
+        "industry": "行业视角",
+    }
+    return mapping.get(value, "综合视角")
+
+
+def _importance_label(value: str) -> str:
+    mapping = {
+        "high": "重要",
+        "medium": "关注",
+        "low": "速览",
+    }
+    return mapping.get(value, "关注")
+
+
+def _key_point_limit(value: str) -> int:
+    mapping = {
+        "high": 4,
+        "medium": 3,
+        "low": 2,
+    }
+    return mapping.get(value, 3)
+
+
 def render_markdown(brief: DailyBrief) -> str:
     lines: list[str] = []
     lines.append(f"# {brief.title}")
@@ -19,15 +46,21 @@ def render_markdown(brief: DailyBrief) -> str:
     lines.append("")
 
     for idx, item in enumerate(brief.items, start=1):
-        lines.append(f"## {idx}. 【{item.perspective.value}】{item.title}")
-        lines.append("- 关键点：")
-        for point in item.key_points:
-            lines.append(f"  - {point}")
+        perspective_text = _perspective_label(item.perspective.value)
+        importance_text = _importance_label(item.importance)
+        lines.append(f"## {idx}、【{importance_text}】【{perspective_text}】{item.title}")
         lines.append(f"- 来源：{item.source_name}")
-        lines.append(f"- 链接：{item.url}")
+        lines.append(f"- 原文链接：{item.url}")
+        lines.append("- 关键信息：")
+        for point in item.key_points[: _key_point_limit(item.importance)]:
+            lines.append(f"  - {point}")
+        meaning = item.why_it_matters.strip() or "该信息可能影响后续选题优先级与资源投入，建议结合业务目标跟踪。"
+        stance = item.stance.strip() or "优先关注可验证的落地信号与业务指标，避免被单点叙事带节奏。"
+        lines.append(f"- 意义：{meaning}")
+        lines.append(f"- 立场观点：{stance}")
         lines.append("")
 
-    lines.append("## 今日观察")
+    lines.append("## 跨条观察")
     for obs in brief.observations:
         lines.append(f"- {obs}")
 
