@@ -6,19 +6,28 @@ item_max: 15
 mix_min_each: 2
 max_items_per_source: 2
 llm_provider: volcengine
-llm_model: doubao-seed-1-8-251228
-volcengine_base_url: https://ark.cn-beijing.volces.com/api/v3
+llm_model: ${LLM_MODEL}
+volcengine_base_url: ${VOLCENGINE_BASE_URL}
 ark_api_key: ${ARK_API_KEY}
 push_enabled: true
 wechat_webhook: ${WECOM_WEBHOOK_URL}
+wecom_enabled: ${WECOM_ENABLED:-false}
+wecom_corp_id: ${WECOM_CORP_ID}
+wecom_agent_id: ${WECOM_AGENT_ID}
+wecom_secret: ${WECOM_SECRET}
+wecom_token: ${WECOM_TOKEN}
+wecom_encoding_aes_key: ${WECOM_ENCODING_AES_KEY}
+wecom_base_url: ${WECOM_BASE_URL}
 feishu_enabled: true
 feishu_app_id: ${FEISHU_APP_ID}
 feishu_app_secret: ${FEISHU_APP_SECRET}
 feishu_verification_token: ${FEISHU_VERIFICATION_TOKEN}
 feishu_encrypt_key: ${FEISHU_ENCRYPT_KEY}
-feishu_base_url: https://open.feishu.cn
+feishu_base_url: ${FEISHU_BASE_URL}
 feishu_connection_mode: websocket
 feishu_ws_reconnect_seconds: 5
+feishu_push_targets:
+  - ${FEISHU_PUSH_TARGETS}
 feishu_receive_id_type: chat_id
 feishu_allow_from: []
 feishu_require_mention: false

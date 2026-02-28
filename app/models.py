@@ -104,6 +104,13 @@ class Settings(BaseModel):
     ark_api_key: str = ""
     push_enabled: bool = False
     wechat_webhook: str = ""
+    wecom_enabled: bool = False
+    wecom_corp_id: str = ""
+    wecom_agent_id: str = ""
+    wecom_secret: str = ""
+    wecom_token: str = ""
+    wecom_encoding_aes_key: str = ""
+    wecom_base_url: str = "https://qyapi.weixin.qq.com"
     feishu_enabled: bool = False
     feishu_app_id: str = ""
     feishu_app_secret: str = ""
