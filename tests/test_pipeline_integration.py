@@ -207,6 +207,78 @@ def test_pipeline_pushes_to_feishu_targets(tmp_path, monkeypatch) -> None:
     assert all(c["receive_id"] == "oc_test_group" for c in push_calls)
 
 
+def test_pipeline_pushes_to_wecom_targets(tmp_path, monkeypatch) -> None:
+    settings_path = tmp_path / "settings.yaml"
+    sources_path = tmp_path / "sources.yaml"
+    db_path = tmp_path / "state.db"
+    archives_dir = tmp_path / "archives"
+
+    settings = {
+        "timezone": "Asia/Shanghai",
+        "schedule_time": "09:30",
+        "collector_trigger_time": "09:20",
+        "item_min": 1,
+        "item_max": 2,
+        "mix_min_each": 1,
+        "llm_provider": "volcengine",
+        "llm_model": "doubao-seed-1-8-251228",
+        "volcengine_base_url": "https://ark.cn-beijing.volces.com/api/v3",
+        "ark_api_key": "",
+        "push_enabled": True,
+        "wechat_webhook": "",
+        "wecom_enabled": True,
+        "wecom_corp_id": "ww1234567890",
+        "wecom_agent_id": "1000002",
+        "wecom_secret": "secret_xxx",
+        "wecom_push_targets": ["zhangsan"],
+        "openai_api_key": "",
+        "request_timeout_seconds": 3,
+        "db_path": str(db_path),
+        "archives_dir": str(archives_dir),
+        "log_level": "INFO",
+    }
+    sources = {"sources": [{"name": "dummy", "type": "rss", "url": "https://example.com/rss", "enabled": True}]}
+
+    settings_path.write_text(yaml.safe_dump(settings, allow_unicode=True), encoding="utf-8")
+    sources_path.write_text(yaml.safe_dump(sources, allow_unicode=True), encoding="utf-8")
+
+    now = datetime.now(timezone.utc)
+
+    def _fake_collect_all_sources(_sources, _timeout, proxy=None):
+        item = RawItem(
+            source_name="dummy",
+            source_weight=1.2,
+            url="https://example.com/recent",
+            title="公司发布 AI 应用",
+            content="这是刚刚发现的 AI 资讯",
+            published_at=now - timedelta(hours=1),
+            discovered_at=now,
+            tags=["ai", "product"],
+        )
+        return [item], {}
+
+    push_calls: list[dict] = []
+
+    def _fake_push_wecom_message(**kwargs):
+        push_calls.append(kwargs)
+        return True
+
+    monkeypatch.setattr("app.pipeline.collect_all_sources", _fake_collect_all_sources)
+    monkeypatch.setattr("app.pipeline.push_wecom_message", _fake_push_wecom_message)
+
+    run_daily_pipeline(
+        settings_path=str(settings_path),
+        sources_path=str(sources_path),
+        llm_client=FallbackLLMClient(),
+        push=None,
+        now=now,
+    )
+
+    assert len(push_calls) >= 1
+    assert all(c["to_user"] == "zhangsan" for c in push_calls)
+    assert all(c["msg_type"] == "markdown" for c in push_calls)
+
+
 def test_pipeline_push_false_does_not_mark_seen(tmp_path, monkeypatch) -> None:
     settings_path = tmp_path / "settings.yaml"
     sources_path = tmp_path / "sources.yaml"

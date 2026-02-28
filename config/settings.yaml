@@ -18,6 +18,8 @@ wecom_secret: ${WECOM_SECRET}
 wecom_token: ${WECOM_TOKEN}
 wecom_encoding_aes_key: ${WECOM_ENCODING_AES_KEY}
 wecom_base_url: ${WECOM_BASE_URL}
+wecom_push_targets:
+  - ${WECOM_PUSH_TARGETS}
 feishu_enabled: true
 feishu_app_id: ${FEISHU_APP_ID}
 feishu_app_secret: ${FEISHU_APP_SECRET}

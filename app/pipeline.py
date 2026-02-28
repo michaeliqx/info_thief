@@ -18,6 +18,7 @@ from app.publisher import archive_brief, push_markdown, render_markdown, send_fa
 from app.ranker import rank_items, select_items_with_mix
 from app.rsshub_bootstrap import ensure_rsshub_for_sources
 from app.storage import StateStore
+from app.wecom import push_wecom_message, split_text_for_wecom
 
 logger = logging.getLogger(__name__)
 
@@ -216,6 +217,16 @@ def _to_wecom_content(markdown_content: str, max_chars: int = 3800) -> str:
     return markdown_content[: max_chars - 20] + "\n\n(内容过长，已截断)"
 
 
+def _normalize_push_targets(values: list[str]) -> list[str]:
+    targets: list[str] = []
+    for value in values:
+        if not value:
+            continue
+        parts = [part.strip() for part in str(value).split(",")]
+        targets.extend([part for part in parts if part])
+    return targets
+
+
 def run_daily_pipeline(
     settings_path: str = "config/settings.yaml",
     sources_path: str = "config/sources.yaml",
@@ -334,6 +345,31 @@ def run_daily_pipeline(
                 if not feishu_ok:
                     push_errors.append("feishu")
 
+            wecom_targets = _normalize_push_targets(settings.wecom_push_targets)
+            if settings.wecom_enabled and wecom_targets:
+                push_attempted = True
+                wecom_chunks = split_text_for_wecom(_to_wecom_content(markdown), max_chars=3000)
+                if not wecom_chunks:
+                    wecom_chunks = [f"执行完成：{brief.title}（无可用内容）"]
+                wecom_ok = True
+                for target in wecom_targets:
+                    total = len(wecom_chunks)
+                    for idx, chunk in enumerate(wecom_chunks, start=1):
+                        header = f"[{brief.title}] 第{idx}/{total}段\n" if total > 1 else ""
+                        ok = push_wecom_message(
+                            corp_id=settings.wecom_corp_id,
+                            secret=settings.wecom_secret,
+                            agent_id=settings.wecom_agent_id,
+                            to_user=target,
+                            content=header + chunk,
+                            msg_type="markdown",
+                            base_url=settings.wecom_base_url,
+                        )
+                        if not ok:
+                            wecom_ok = False
+                if not wecom_ok:
+                    push_errors.append("wecom-app")
+
             if not push_attempted:
                 raise RuntimeError("Push is enabled but no channel configured")
             if push_errors:
@@ -362,6 +398,20 @@ def run_daily_pipeline(
                             receive_id=target,
                             receive_id_type=settings.feishu_receive_id_type,
                             content=alert_text,
+                            retries=(),
+                        )
+                wecom_targets = _normalize_push_targets(settings.wecom_push_targets)
+                if settings.wecom_enabled and wecom_targets:
+                    alert_text = f"[AI日报告警] 当日任务失败：{str(exc)[:500]}"
+                    for target in wecom_targets:
+                        push_wecom_message(
+                            corp_id=settings.wecom_corp_id,
+                            secret=settings.wecom_secret,
+                            agent_id=settings.wecom_agent_id,
+                            to_user=target,
+                            content=alert_text,
+                            msg_type="text",
+                            base_url=settings.wecom_base_url,
                             retries=(),
                         )
             except Exception:  # noqa: BLE001

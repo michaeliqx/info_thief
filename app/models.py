@@ -111,6 +111,7 @@ class Settings(BaseModel):
     wecom_token: str = ""
     wecom_encoding_aes_key: str = ""
     wecom_base_url: str = "https://qyapi.weixin.qq.com"
+    wecom_push_targets: list[str] = Field(default_factory=list)
     feishu_enabled: bool = False
     feishu_app_id: str = ""
     feishu_app_secret: str = ""
