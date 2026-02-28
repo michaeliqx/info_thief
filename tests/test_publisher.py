@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from datetime import date
 
-from app.publisher import push_markdown
+from app.models import BriefItem, DailyBrief, Perspective
+from app.publisher import push_markdown, render_markdown
 
 
 @dataclass
@@ -47,3 +49,28 @@ def test_push_markdown_retry_until_success() -> None:
     assert ok is True
     assert client.calls == 3
     assert sleeps == [1, 2]
+
+
+def test_render_markdown_uses_insight() -> None:
+    brief = DailyBrief(
+        date=date.today(),
+        title="AI 每日情报 | 测试",
+        intro="今日导语",
+        items=[
+            BriefItem(
+                perspective=Perspective.PRODUCT,
+                title="测试条目",
+                key_points=["要点1", "要点2"],
+                source_name="测试源",
+                url="https://example.com",
+                score=1.0,
+                insight="该技术可降低推理成本，值得关注落地进展。",
+            )
+        ],
+        observations=["跨条观察"],
+    )
+    md = render_markdown(brief)
+    assert "insight" in md
+    assert "该技术可降低推理成本" in md
+    assert "意义" not in md
+    assert "立场观点" not in md

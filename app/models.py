@@ -56,8 +56,7 @@ class BriefItem(BaseModel):
     url: str
     score: float
     importance: Literal["high", "medium", "low"] = "medium"
-    why_it_matters: str = ""
-    stance: str = ""
+    insight: str = ""  # 合并原意义与立场观点，给出价值点（前瞻/否定/认可+延伸）
 
 
 class DailyBrief(BaseModel):

@@ -170,3 +170,41 @@ def test_priority_top_tag_has_highest_priority() -> None:
 
     ranked = rank_items([normal, top], now=now)
     assert ranked[0].source_name == "top-source"
+
+
+def test_kazik_24h_bonus_prioritizes_recent_content() -> None:
+    """数字生命卡兹克 24 小时内内容优先于其他来源。"""
+    now = datetime.now(timezone.utc)
+    kazik_recent = ClassifiedItem(
+        item_id="k-1",
+        source_name="数字生命卡兹克(微信主页直连)",
+        source_weight=1.0,
+        url="https://k.com/1",
+        canonical_url="https://k.com/1",
+        title="AI 观察",
+        content="发布 模型",
+        published_at=now - timedelta(hours=2),
+        discovered_at=now,
+        language="zh",
+        tags=["ai"],
+        perspective=Perspective.INDUSTRY,
+        classification_source="rule",
+    )
+    other_recent = ClassifiedItem(
+        item_id="o-1",
+        source_name="AITNT AI资讯(聚合源)",
+        source_weight=1.5,
+        url="https://o.com/1",
+        canonical_url="https://o.com/1",
+        title="AI 观察",
+        content="发布 模型",
+        published_at=now - timedelta(hours=2),
+        discovered_at=now,
+        language="zh",
+        tags=["ai"],
+        perspective=Perspective.INDUSTRY,
+        classification_source="rule",
+    )
+
+    ranked = rank_items([other_recent, kazik_recent], now=now)
+    assert ranked[0].source_name == "数字生命卡兹克(微信主页直连)"

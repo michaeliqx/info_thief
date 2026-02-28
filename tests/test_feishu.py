@@ -2,7 +2,7 @@ import json
 from dataclasses import dataclass
 from datetime import date
 
-from app.feishu import handle_feishu_event, push_feishu_text
+from app.feishu import handle_feishu_event, push_feishu_text, split_text_for_feishu
 from app.models import BriefItem, DailyBrief, Perspective, Settings
 
 
@@ -87,6 +87,17 @@ def test_push_feishu_text_retry_until_success() -> None:
     assert client.msg_calls == 2
     assert client.auth_calls >= 1
     assert sleeps == [1]
+
+
+def test_split_text_for_feishu_splits_long_content() -> None:
+    short = "短内容"
+    assert split_text_for_feishu(short) == [short]
+
+    long_content = "a" * 1000 + "\n" + "b" * 1000 + "\n" + "c" * 1000
+    chunks = split_text_for_feishu(long_content, max_chars=1500)
+    assert len(chunks) >= 2
+    for c in chunks:
+        assert len(c) <= 1600
 
 
 def test_handle_feishu_event_help_command() -> None:

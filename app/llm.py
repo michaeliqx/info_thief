@@ -121,8 +121,7 @@ def _build_fallback_summary(
 
     return {
         "importance": importance,
-        "why_it_matters": f"该信息与{perspective_text}方向有关，可能影响后续选题优先级与资源投入。",
-        "stance": "优先关注可验证的落地信号与业务指标，避免被单点叙事带节奏。",
+        "insight": f"该信息与{perspective_text}方向有关，可能影响后续选题优先级与资源投入；建议关注可验证的落地信号与业务指标。",
         "points": [
             f"该信息由{source_name}发布，主题与 AI 发展相关。",
             f"核心内容：{snippet}",
@@ -148,10 +147,14 @@ def _normalize_summary_payload(
     if not points:
         points = fallback["points"]
 
+    insight_raw = str(data.get("insight") or "").strip()
+    if not insight_raw and (data.get("why_it_matters") or data.get("stance")):
+        why = str(data.get("why_it_matters") or "").strip()
+        stance = str(data.get("stance") or "").strip()
+        insight_raw = "；".join([p for p in [why, stance] if p])
     return {
         "importance": _normalize_importance(data.get("importance"), fallback=fallback["importance"]),
-        "why_it_matters": str(data.get("why_it_matters") or "").strip() or fallback["why_it_matters"],
-        "stance": str(data.get("stance") or "").strip() or fallback["stance"],
+        "insight": insight_raw or fallback["insight"],
         "points": points[:4],
     }
 
@@ -230,14 +233,12 @@ class OpenAILLMClient:
             "请将以下资讯总结为严格 JSON，不要输出任何额外文本。\n"
             "返回格式："
             "{\"importance\":\"high|medium|low\","
-            "\"why_it_matters\":\"一句话说明为什么重要\","
-            "\"stance\":\"一句话给出立场判断\","
+            "\"insight\":\"一句话给出价值点\","
             "\"points\":[\"要点1\",\"要点2\"]}\n"
             "要求：\n"
             "1) points 输出 2-4 条中文短句；\n"
-            "2) why_it_matters 强调业务/产品/行业意义；\n"
-            "3) stance 体现编辑判断，不要中性复述；\n"
-            "4) importance 用 high/medium/low。\n"
+            "2) insight 合并意义与立场，给出价值点：可有一定前瞻性、可否定文章内容、可认可并延伸；不要中性复述；\n"
+            "3) importance 用 high/medium/low。\n"
             f"\n视角提示:{perspective_hint}\n标题:{title}\n来源:{source_name}\n链接:{url}\n内容:{content[:4000]}"
         )
         raw = self._chat("你是严谨的科技编辑。", prompt)
@@ -330,14 +331,12 @@ class VolcengineLLMClient:
             "请将以下资讯总结为严格 JSON，不要输出任何额外文本。\n"
             "返回格式："
             "{\"importance\":\"high|medium|low\","
-            "\"why_it_matters\":\"一句话说明为什么重要\","
-            "\"stance\":\"一句话给出立场判断\","
+            "\"insight\":\"一句话给出价值点\","
             "\"points\":[\"要点1\",\"要点2\"]}\n"
             "要求：\n"
             "1) points 输出 2-4 条中文短句；\n"
-            "2) why_it_matters 强调业务/产品/行业意义；\n"
-            "3) stance 体现编辑判断，不要中性复述；\n"
-            "4) importance 用 high/medium/low。\n"
+            "2) insight 合并意义与立场，给出价值点：可有一定前瞻性、可否定文章内容、可认可并延伸；不要中性复述；\n"
+            "3) importance 用 high/medium/low。\n"
             f"\n视角提示:{perspective_hint}\n标题:{title}\n来源:{source_name}\n链接:{url}\n内容:{content[:4000]}"
         )
         raw = self._respond("你是严谨的科技编辑。", prompt)

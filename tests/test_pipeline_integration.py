@@ -203,8 +203,8 @@ def test_pipeline_pushes_to_feishu_targets(tmp_path, monkeypatch) -> None:
         now=now,
     )
 
-    assert len(push_calls) == 1
-    assert push_calls[0]["receive_id"] == "oc_test_group"
+    assert len(push_calls) >= 1
+    assert all(c["receive_id"] == "oc_test_group" for c in push_calls)
 
 
 def test_pipeline_push_false_does_not_mark_seen(tmp_path, monkeypatch) -> None:

@@ -10,7 +10,7 @@ from app.classifier import classify_items
 from app.collector import collect_from_source
 from app.config import load_settings, load_sources
 from app.deduper import dedupe_items
-from app.feishu import push_feishu_text
+from app.feishu import push_feishu_text, split_text_for_feishu
 from app.llm import FallbackLLMClient, LLMClient, OpenAILLMClient, VolcengineLLMClient
 from app.models import BriefItem, DailyBrief, RankedItem, Settings, SourceConfig
 from app.normalizer import normalize_items
@@ -168,13 +168,9 @@ def _build_brief(
         if importance not in {"high", "medium", "low"}:
             importance = importance_fallback.get(item.item_id, "medium")
 
-        why_it_matters = str(summary.get("why_it_matters") or "").strip()
-        if not why_it_matters:
-            why_it_matters = "该信息可能影响后续选题优先级与资源投入，建议结合业务目标跟踪。"
-
-        stance = str(summary.get("stance") or "").strip()
-        if not stance:
-            stance = "优先关注可验证的落地信号与业务指标，避免被单点叙事带节奏。"
+        insight = str(summary.get("insight") or "").strip()
+        if not insight:
+            insight = "该信息可能影响后续选题优先级与资源投入，建议结合业务目标跟踪。"
 
         brief_items.append(
             BriefItem(
@@ -185,8 +181,7 @@ def _build_brief(
                 url=item.url,
                 score=item.score,
                 importance=importance,  # type: ignore[arg-type]
-                why_it_matters=why_it_matters,
-                stance=stance,
+                insight=insight,
             )
         )
 
@@ -216,12 +211,6 @@ def _build_brief(
 
 
 def _to_wecom_content(markdown_content: str, max_chars: int = 3800) -> str:
-    if len(markdown_content) <= max_chars:
-        return markdown_content
-    return markdown_content[: max_chars - 20] + "\n\n(内容过长，已截断)"
-
-
-def _to_feishu_content(markdown_content: str, max_chars: int = 6000) -> str:
     if len(markdown_content) <= max_chars:
         return markdown_content
     return markdown_content[: max_chars - 20] + "\n\n(内容过长，已截断)"
@@ -324,19 +313,24 @@ def run_daily_pipeline(
 
             if settings.feishu_enabled and settings.feishu_push_targets:
                 push_attempted = True
-                feishu_content = _to_feishu_content(markdown)
+                feishu_chunks = split_text_for_feishu(markdown, max_chars=3000)
+                if not feishu_chunks:
+                    feishu_chunks = [f"执行完成：{brief.title}（无可用内容）"]
                 feishu_ok = True
                 for target in settings.feishu_push_targets:
-                    ok = push_feishu_text(
-                        app_id=settings.feishu_app_id,
-                        app_secret=settings.feishu_app_secret,
-                        base_url=settings.feishu_base_url,
-                        receive_id=target,
-                        receive_id_type=settings.feishu_receive_id_type,
-                        content=feishu_content,
-                    )
-                    if not ok:
-                        feishu_ok = False
+                    total = len(feishu_chunks)
+                    for idx, chunk in enumerate(feishu_chunks, start=1):
+                        header = f"[{brief.title}] 第{idx}/{total}段\n" if total > 1 else ""
+                        ok = push_feishu_text(
+                            app_id=settings.feishu_app_id,
+                            app_secret=settings.feishu_app_secret,
+                            base_url=settings.feishu_base_url,
+                            receive_id=target,
+                            receive_id_type=settings.feishu_receive_id_type,
+                            content=header + chunk,
+                        )
+                        if not ok:
+                            feishu_ok = False
                 if not feishu_ok:
                     push_errors.append("feishu")
 

@@ -273,7 +273,7 @@ def _resolve_command(text: str) -> str | None:
     return None
 
 
-def _split_text_for_feishu(content: str, max_chars: int = 3000) -> list[str]:
+def split_text_for_feishu(content: str, max_chars: int = 3000) -> list[str]:
     text = content.strip()
     if not text:
         return []
@@ -409,7 +409,7 @@ def _run_pipeline_and_reply(
     try:
         brief = run_pipeline_fn(push=False)
         markdown_content = render_markdown(brief)
-        chunks = _split_text_for_feishu(markdown_content)
+        chunks = split_text_for_feishu(markdown_content)
         if not chunks:
             chunks = [f"执行完成：{brief.title}（无可用内容）"]
 

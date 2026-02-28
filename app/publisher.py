@@ -54,10 +54,8 @@ def render_markdown(brief: DailyBrief) -> str:
         lines.append("- 关键信息：")
         for point in item.key_points[: _key_point_limit(item.importance)]:
             lines.append(f"  - {point}")
-        meaning = item.why_it_matters.strip() or "该信息可能影响后续选题优先级与资源投入，建议结合业务目标跟踪。"
-        stance = item.stance.strip() or "优先关注可验证的落地信号与业务指标，避免被单点叙事带节奏。"
-        lines.append(f"- 意义：{meaning}")
-        lines.append(f"- 立场观点：{stance}")
+        insight = item.insight.strip() or "该信息可能影响后续选题优先级与资源投入，建议结合业务目标跟踪。"
+        lines.append(f"- insight：{insight}")
         lines.append("")
 
     lines.append("## 跨条观察")

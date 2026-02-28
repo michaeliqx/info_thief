@@ -42,6 +42,24 @@ def _calc_recency_score(published_at: datetime | None, discovered_at: datetime, 
     return max(0.0, 5.0 * (1 - min(age_hours, 24.0) / 24.0))
 
 
+def _calc_kazik_24h_bonus(
+    source_name: str,
+    published_at: datetime | None,
+    discovered_at: datetime,
+    now: datetime,
+) -> float:
+    """数字生命卡兹克 24 小时内推送优先：不论哪个数据源，有 24h 内内容则加分。"""
+    if "数字生命卡兹克" not in source_name:
+        return 0.0
+    base_time = published_at or discovered_at
+    if base_time.tzinfo is None:
+        base_time = base_time.replace(tzinfo=timezone.utc)
+    age_hours = max(0.0, (now - base_time).total_seconds() / 3600)
+    if age_hours <= 24.0:
+        return 5.0
+    return 0.0
+
+
 def rank_items(items: list[ClassifiedItem], now: datetime | None = None) -> list[RankedItem]:
     now = now or datetime.now(timezone.utc)
     ranked: list[RankedItem] = []
@@ -51,7 +69,10 @@ def rank_items(items: list[ClassifiedItem], now: datetime | None = None) -> list
         authority = item.source_weight * 2.5
         heat = _calc_heat_score(f"{item.title} {item.content}")
         tag_bonus = _calc_tag_bonus(item.tags)
-        score = recency + authority + heat + tag_bonus
+        kazik_bonus = _calc_kazik_24h_bonus(
+            item.source_name, item.published_at, item.discovered_at, now
+        )
+        score = recency + authority + heat + tag_bonus + kazik_bonus
 
         ranked.append(
             RankedItem(
@@ -59,7 +80,7 @@ def rank_items(items: list[ClassifiedItem], now: datetime | None = None) -> list
                 score=round(score, 4),
                 rank_reason=(
                     f"recency={recency:.2f}, authority={authority:.2f}, "
-                    f"heat={heat:.2f}, tag_bonus={tag_bonus:.2f}"
+                    f"heat={heat:.2f}, tag_bonus={tag_bonus:.2f}, kazik_24h={kazik_bonus:.2f}"
                 ),
             )
         )
